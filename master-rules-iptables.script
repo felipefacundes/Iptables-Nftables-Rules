@@ -1,6 +1,8 @@
+# #   ##-##   sudo pacman -S nftables iptables-nft fail2ban
+
 #!/bin/bash
 
-##### Example 1
+# #### #### #### Example 1
 # iptables -A INPUT -p tcp -m tcp -m multiport ! --dports 80,443 -j DROP
 # iptables -A INPUT -p tcp -m tcp -m multiport --dports 80,443 -j ACCEPT
 # iptables -A INPUT -m conntrack -j ACCEPT  --ctstate RELATED,ESTABLISHED
@@ -11,7 +13,7 @@
 # iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 # iptables -A FORWARD -j DROP
 #
-##### Script Clear 1
+# #### #### #### Script Clear 1
 # Remove all DROPs.
 # iptables="/sbin/iptables"
 # echo "[*] Removing all DROPs ..."
@@ -50,7 +52,7 @@
 ##### List all rules
 # iptables -L -n -v
 #
-##### Print all rules in the selected chain.
+# #### #### #### Print all rules in the selected chain.
 # iptables -S
 
 # -P {chain} {target} 	Set the policy for the built-in chain to either ACCEPT or DROP.
@@ -63,7 +65,7 @@
 # -Z 	Zero the packet and byte counters in all chains, or only the given chain, or only the given rule in a chain.
 # -X 	Delete the optional user-defined chain specified. If no argument is given, it will attempt to delete every non-builtin chain in the table.
 
-##### --help
+# #### #### #### --help
 # Usage: iptables -[ACD] chain rule-specification [options]
 #       iptables -I chain [rulenum] rule-specification [options]
 #       iptables -R chain rulenum rule-specification [options]
@@ -132,7 +134,7 @@
 #  --set-counters PKTS BYTES	set the counter during insert/append
 #  --version	-V		print package version.
 #
-##### Rule example 1
+# #### #### #### Rule example 1
 #
 # *filter
 # :INPUT ACCEPT [0:0]
@@ -152,7 +154,7 @@
 # -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
 # -A RH-Firewall-1-INPUT -j REJECT --reject-with icmp-host-prohibited
 #
-##### Example 2
+#           #### Example 2
 # Setting default policies:
 # iptables -P INPUT DROP
 # iptables -P FORWARD DROP
@@ -162,23 +164,62 @@
 # iptables -A INPUT -p tcp --dport 80 -j ACCEPT       # HTTP
 # iptables -A INPUT -p tcp --dport 443 -j ACCEPT      # HTTPS
 #
-
-# Best Scrip all block
-echo -e $(seq -f "iptables -A INPUT -p tcp --dport %g -j DROP\n" 65535) > /tmp/tcp-block-all-ports.sh
-echo -e $(seq -f "iptables -A OUTPUT -p tcp --dport %g -j DROP\n" 65535) >> /tmp/tcp-block-all-ports.sh
-echo -e $(seq -f "iptables -A INPUT -p udp --dport %g -j DROP\n" 65535) > /tmp/udp-block-all-ports.sh
-echo -e $(seq -f "iptables -A OUTPUT -p udp --dport %g -j DROP\n" 65535) >> /tmp/udp-block-all-ports.sh
+#           #### Example 3
+# iptables -P INPUT ACCEPT
+# iptables -P FORWARD ACCEPT
+# iptables -P OUTPUT ACCEPT
+# iptables -A FORWARD -p tcp -m tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
 #
-echo -e $(seq -f "iptables -A INPUT -p sctp --dport %g -j DROP\n" 65535) > /tmp/sctp-block-all-ports.sh
-echo -e $(seq -f "iptables -A OUTPUT -p sctp --dport %g -j DROP\n" 65535) >> /tmp/sctp-block-all-ports.sh
-echo -e $(seq -f "iptables -A INPUT -p dccp --dport %g -j DROP\n" 65535) > /tmp/dccp-block-all-ports.sh
-echo -e $(seq -f "iptables -A OUTPUT -p dccp --dport %g -j DROP\n" 65535) >> /tmp/dccp-block-all-ports.sh
+#                         #################################
+#                         #### Nftables equivalent commands
+#
+#            https://www.redhat.com/en/blog/using-iptables-nft-hybrid-linux-firewall
+#            https://wiki.nftables.org/wiki-nftables/index.php/Moving_from_iptables_to_nftables
+#            https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes
+#            https://xdeb.org/post/2019/09/26/setting-up-a-server-firewall-with-nftables-that-support-wireguard-vpn/
+#            https://wiki.nftables.org/wiki-nftables/index.php/Simple_ruleset_for_a_server
+#            https://manpages.debian.org/buster-backports/nftables/nftables.8.en.html
+#            https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
+#
+# iptables-translate -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
+# nft add rule ip filter INPUT tcp dport 22 ct state new counter accept
+#
+# ip6tables-translate -A FORWARD -i eth0 -o eth3 -p udp -m multiport --dports 111,222 -j ACCEPT
+# nft add rule ip6 filter FORWARD iifname eth0 oifname eth3 meta l4proto udp udp dport { 111,222} counter accept
+#
+# iptables-nft -A INPUT -i eth0 -s 10.0.0.0/8 -j ACCEPT
+# nft add rule ip filter INPUT meta iifname "eth0" ip saddr 10.0.0.0/8 counter accept
+#
+# iptables-nft -A FORWARD -p icmp -j ACCEPT
+#
+# iptables save
+# nft list tables
+#
+# iptables -L -n -v
+# nft list ruleset
+
+# #### #### #### Best Scrip all block
+echo -e $(seq -f "iptables -A INPUT -p tcp --dport %g -j DROP;" 65535) > /tmp/tcp-block-all-ports.sh
+echo -e $(seq -f "iptables -A OUTPUT -p tcp --dport %g -j DROP;" 65535) >> /tmp/tcp-block-all-ports.sh
+echo -e $(seq -f "iptables -A INPUT -p udp --dport %g -j DROP;" 65535) > /tmp/udp-block-all-ports.sh
+echo -e $(seq -f "iptables -A OUTPUT -p udp --dport %g -j DROP;" 65535) >> /tmp/udp-block-all-ports.sh
+#
+echo -e $(seq -f "iptables -A INPUT -p sctp --dport %g -j DROP;" 65535) > /tmp/sctp-block-all-ports.sh
+echo -e $(seq -f "iptables -A OUTPUT -p sctp --dport %g -j DROP;" 65535) >> /tmp/sctp-block-all-ports.sh
+echo -e $(seq -f "iptables -A INPUT -p dccp --dport %g -j DROP;" 65535) > /tmp/dccp-block-all-ports.sh
+echo -e $(seq -f "iptables -A OUTPUT -p dccp --dport %g -j DROP;" 65535) >> /tmp/dccp-block-all-ports.sh
 
 sudo chmod +x /tmp/*-block-all-ports.sh
 sudo /tmp/*-block-all-ports.sh
 
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A OUTPUT -i lo -j ACCEPT
+
 sudo iptables -D OUTPUT -p tcp --dport 443 -j DROP
+sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
+
 sudo iptables -D OUTPUT -p tcp --dport 80 -j DROP
+sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
 
 sudo iptables-save -f /etc/iptables/iptables.rules
 #sudo iptables-restore /etc/iptables/iptables.rules
