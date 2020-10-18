@@ -1,0 +1,215 @@
+# #   ##-##   sudo pacman -S nftables iptables-nft fail2ban
+#############################################################################################################
+# #### #### #### Default Rule
+
+#!/usr/bin/nft -f
+# ipv4/ipv6 Simple & Safe Firewall
+# you can find examples in /usr/share/nftables/
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0;
+
+    # allow established/related connections
+    ct state {established, related} accept
+
+    # early drop of invalid connections
+    ct state invalid drop
+
+    # allow from loopback
+    iifname lo accept
+
+    # allow icmp
+    ip protocol icmp accept
+    meta l4proto ipv6-icmp accept
+
+    # allow ssh
+    tcp dport ssh accept
+
+    # everything else
+    reject with icmpx type port-unreachable
+  }
+  chain forward {
+    type filter hook forward priority 0;
+    drop
+  }
+  chain output {
+    type filter hook output priority 0;
+  }
+
+}
+
+# vim:set ts=2 sw=2 et:
+
+#############################################################################################################
+#                               https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
+# #### #### #### Option Rule 1 - BRUTE FORCE
+
+#!/usr/sbin/nft -f
+flush ruleset
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+
+    iifname lo accept
+    ct state established,related accept
+    tcp dport ssh ct state new accept
+    tcp dport http ct state new accept
+    tcp dport https ct state new accept
+    tcp dport imap2 ct state new accept
+    tcp dport imaps ct state new accept
+    tcp dport pop3 ct state new accept
+    tcp dport pop3s ct state new accept
+    tcp dport submission ct state new accept
+    tcp dport smtp ct state new accept
+
+     # ICMP: errors, pings
+     ip protocol icmp icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded, parameter-problem, router-solicitation, router-advertisement } accept
+     # ICMPv6: errors, pings, routing
+     ip6 nexthdr icmpv6 counter accept comment "accept all ICMP types"
+
+     # Reject other packets
+     ip protocol tcp reject with tcp reset
+  }
+}
+
+# mkdir -p /etc/nftables
+include "/etc/nftables/fail2ban.conf"
+
+# …and in there create the fail2ban.conf file containing these lines:
+
+#!/usr/sbin/nft -f
+
+table inet fail2ban {
+  chain input {
+    type filter hook input priority 100;
+  }
+}
+
+#############################################################################################################
+#                              https://wiki.nftables.org/wiki-nftables/index.php/Simple_ruleset_for_a_server
+# #### #### #### Option Rule 2
+
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+# List all IPs and IP ranges of your traffic filtering proxy source.
+define SAFE_TRAFFIC_IPS = {
+    192.168.1.0/24,
+    #x.x.x.x/xx,
+    #x.x.x.x,
+    #x.x.x.x
+}
+
+table inet firewall {
+
+    chain inbound {
+
+    	# By default, drop all traffic unless it meets a filter
+    	# criteria specified by the rules that follow below.
+        type filter hook input priority 0; policy drop;
+
+        # Allow traffic from established and related packets.
+        ct state established,related accept
+
+        # Drop invalid packets.
+        ct state invalid drop
+
+        # Allow loopback traffic.
+        iifname lo accept
+
+        # Allow all ICMP and IGMP traffic, but enforce a rate limit
+        # to help prevent some types of flood attacks.
+        ip protocol icmp limit rate 4/second accept
+        ip6 nexthdr ipv6-icmp limit rate 4/second accept
+        ip protocol igmp limit rate 4/second accept
+
+        # Allow SSH on port 22.
+        tcp dport 22 drop
+
+        # Allow HTTP(S).
+        # -- From anywhere
+        tcp dport { http, https } accept
+        udp dport { http, https } accept
+        # -- From approved IP ranges only
+        # tcp dport { http, https } ip saddr $SAFE_TRAFFIC_IPS accept
+        # udp dport { http, https } ip saddr $SAFE_TRAFFIC_IPS accept
+
+        # Uncomment to allow incoming traffic on other ports.
+        # -- Allow Jekyll dev traffic on port 4000.
+        # tcp dport 4000 accept
+        # -- Allow Hugo dev traffic on port 1313.
+        # tcp dport 1313 accept
+
+        # Uncomment to enable logging of denied inbound traffic
+        # log prefix "[nftables] Inbound Denied: " flags all counter drop
+
+    }
+
+    chain forward {
+
+        # Drop everything (assumes this device is not a router)
+        type filter hook forward priority 0; policy drop;
+
+        # Uncomment to enable logging of denied forwards
+        # log prefix "[nftables] Forward Denied: " flags all counter drop
+
+    }
+
+    chain outbound {
+
+        # Allow all outbound traffic
+        type filter hook output priority 0; policy accept;
+
+    }
+
+}
+
+#############################################################################################################
+#                               https://www.spinics.net/lists/netfilter/msg58936.html
+# #### #### #### Option Rule 3
+
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        iifname lo accept
+
+        # ssh for internal network
+        ip saddr 192.168.0.0/16 tcp dport 22 counter accept
+        ct state established,related accept
+
+        # Avoid brute force on ssh
+        tcp dport 22 ct state new limit rate 10/minute accept
+
+        # Early drop of invalid connections
+        ct state invalid drop
+
+        # VsFTPD
+        ip saddr 192.168.0.0/16 tcp dport 20 counter accept
+        ip saddr 192.168.0.0/16 tcp dport 21 counter accept
+        ip saddr 192.168.0.0/16 tcp dport 990 counter accept
+        ip saddr 192.168.0.0/16 tcp dport 40000-50000 counter accept
+
+
+        # ICMP & IGMP
+        ip saddr 192.168.0.0/16 icmp type echo-request counter accept
+        icmp type echo-request counter drop
+        ip protocol igmp drop
+
+        # Everything else
+        reject with icmpx type port-unreachable
+
+        log flags all counter drop
+        log prefix "[nftables] Input Denied: " flags all counter drop
+    }
+}
+
+#############################################################################################################
+# #### #### #### Option Rule 4
