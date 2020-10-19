@@ -206,6 +206,9 @@
 # iptables -A INPUT -i eth0 -m mac ! --mac-source 00:00:5e:00:53:00 -j DROP
 # nft add rule filter input iif eth0 ether saddr != 00:00:5e:00:53:00 drop
 #
+# iptables -A OUTPUT -p tcp -m tcp -d www.xvideos.com -j DROP
+# 
+#
 #              Moving from iptables to nftables
 #              --------------------------------
 # iptables-save > iptables-ruleset.txt
