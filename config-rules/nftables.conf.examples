@@ -5,6 +5,7 @@
 #!/usr/bin/nft -f
 # ipv4/ipv6 Simple & Safe Firewall
 # you can find examples in /usr/share/nftables/
+# https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
 
 table inet filter {
   chain input {
@@ -26,6 +27,10 @@ table inet filter {
     # allow ssh
     tcp dport ssh accept
 
+    # allow dlna
+    tcp dport 8200 accept
+    #udp dport 1900 accept
+
     # everything else
     reject with icmpx type port-unreachable
   }
@@ -40,6 +45,8 @@ table inet filter {
 }
 
 # vim:set ts=2 sw=2 et:
+
+include "/etc/nftables/fail2ban.conf"
 
 #############################################################################################################
 #                               https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
