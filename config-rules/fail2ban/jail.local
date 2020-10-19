@@ -1,0 +1,13 @@
+[DEFAULT]
+banaction = nftables-multiport
+chain     = input
+
+#[apache-auth]
+#enabled = true
+
+[dovecot]
+enabled = true
+port    = pop3,pop3s,imap2,imaps,submission,465,sieve
+
+[postfix]
+enabled = true
