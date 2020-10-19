@@ -22,6 +22,8 @@ table inet filter {
 
     # allow ssh
     tcp dport ssh accept
+
+    # allow dlna
     tcp dport 8200 accept
     #udp dport 1900 accept
 
