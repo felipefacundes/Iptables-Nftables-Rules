@@ -207,13 +207,22 @@
 # nft add rule filter input iif eth0 ether saddr != 00:00:5e:00:53:00 drop
 #
 # iptables -A OUTPUT -p tcp -m tcp -d www.xvideos.com -j DROP
-# 
+# meta l4proto tcp ip daddr 185.88.181.5 drop
+# meta l4proto tcp ip daddr 185.88.181.6 drop
+# meta l4proto tcp ip daddr 185.88.181.7 drop 
+# meta l4proto tcp ip daddr 185.88.181.8 drop 
+#	meta l4proto tcp ip daddr 185.88.181.9 drop 
+#	meta l4proto tcp ip daddr 185.88.181.10 drop 
+#	meta l4proto tcp ip daddr 185.88.181.11 drop 
+#	meta l4proto tcp ip daddr 185.88.181.2 drop 
+#	meta l4proto tcp ip daddr 185.88.181.3 drop 
+#	meta l4proto tcp ip daddr 185.88.181.4 drop
 #
 #              Moving from iptables to nftables
 #              --------------------------------
-# iptables-save > iptables-ruleset.txt
-# iptables-restore-translate -f iptables-ruleset.txt
-# iptables-restore-translate -f iptables-ruleset.txt > ruleset.nft
+# iptables-save > iptables.rules
+# iptables-restore-translate -f iptables.rules
+# iptables-restore-translate -f iptables.rules > ruleset.nft
 # nft -f ruleset.nft
 # nft list ruleset
 
