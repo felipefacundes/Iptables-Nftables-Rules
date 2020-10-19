@@ -1,0 +1,24 @@
+https://debian-handbook.info/browse/pt-BR/stable/sect.firewall-packet-filtering.html                      # 1. Moving from iptables to nftables
+https://wiki.nftables.org/wiki-nftables/index.php/Moving_from_iptables_to_nftables
+
+https://wiki.nftables.org/wiki-nftables/index.php/Simple_rule_management
+https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes
+https://developers.redhat.com/blog/2020/08/18/iptables-the-two-variants-and-their-relationship-with-nftables/  # 2. Variants
+https://wiki.gentoo.org/wiki/Nftables
+https://www.funtoo.org/Package:Nftables
+https://unix.stackexchange.com/questions/453063/is-it-possible-to-filter-drop-packets-by-mac-using-nftables
+https://medium.com/@iced_burn/compare-firewalld-iptables-nftables-netfilter-de08a8d21b5b
+https://www.redhat.com/en/blog/using-nftables-red-hat-enterprise-linux-8
+https://home.regit.org/netfilter-en/nftables-quick-howto/
+https://xdeb.org/post/2019/09/26/setting-up-a-server-firewall-with-nftables-that-support-wireguard-vpn/
+https://docs.snowme34.com/en/latest/reference/devops/debian-firewall-nftables-and-iptables.html
+https://manpages.debian.org/buster-backports/nftables/nftables.8.en.html
+https://www.spinics.net/lists/netfilter/msg58936.html
+
+
+
+iptables-save > iptables-ruleset.txt
+iptables-restore-translate -f iptables-ruleset.txt
+iptables-restore-translate -f iptables-ruleset.txt > ruleset.nft
+nft -f ruleset.nft
+nft list ruleset
