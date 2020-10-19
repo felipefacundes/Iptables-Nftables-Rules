@@ -180,6 +180,10 @@
 #            https://wiki.nftables.org/wiki-nftables/index.php/Simple_ruleset_for_a_server
 #            https://manpages.debian.org/buster-backports/nftables/nftables.8.en.html
 #            https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
+#            https://debian-handbook.info/browse/pt-BR/stable/sect.firewall-packet-filtering.html
+#            https://wiki.archlinux.org/index.php/Simple_stateful_firewall
+#            https://www.digitalocean.com/community/tutorials/how-to-list-and-delete-iptables-firewall-rules
+#            https://www.casbay.com/guide/kb/how-to-block-all-ports-in-iptables/                                <-- best rules
 #
 # iptables-translate -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
 # nft add rule ip filter INPUT tcp dport 22 ct state new counter accept
@@ -194,8 +198,20 @@
 #
 # iptables save
 # nft list tables
+# nft list table filter
 #
 # iptables -L -n -v
+# nft list ruleset
+#
+# iptables -A INPUT -i eth0 -m mac ! --mac-source 00:00:5e:00:53:00 -j DROP
+# nft add rule filter input iif eth0 ether saddr != 00:00:5e:00:53:00 drop
+#
+#              Moving from iptables to nftables
+#              --------------------------------
+# iptables-save > iptables-ruleset.txt
+# iptables-restore-translate -f iptables-ruleset.txt
+# iptables-restore-translate -f iptables-ruleset.txt > ruleset.nft
+# nft -f ruleset.nft
 # nft list ruleset
 
 # #### #### #### Best Scrip all block
@@ -227,6 +243,7 @@ sudo systemctl enable iptables.service
 
 ################################################################################################
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml #
+# https://pt.wikipedia.org/wiki/Lista_de_portas_dos_protocolos_TCP_e_UDP#Portas_49152_a_65535  #
 #                From 49152 to 65535 can be used dynamically by applications                   #
 #           https://www.sciencedirect.com/topics/computer-science/registered-port              #
 ###### -----                        ----- ################## --------- ################## - ####
