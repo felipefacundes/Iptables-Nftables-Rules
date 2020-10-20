@@ -1,3 +1,74 @@
+#######################################################################################
+# Default 1
+
+#!/usr/bin/nft -f
+# ipv4/ipv6 Simple & Safe Firewall
+# you can find examples in /usr/share/nftables/
+# https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
+
+table ip nat {
+    chain prerouting {
+        type nat hook prerouting priority 0; policy accept;
+        udp dport domain ip saddr 192.168.1.0/24 dnat to 192.168.1.254:domain
+    }
+
+    chain postrouting {
+        type nat hook postrouting priority 100; policy accept;
+        oifname "wlan0" masquerade
+    }
+}
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+
+    # allow established/related connections
+    ct state {established, related} accept
+    
+    # early drop of invalid connections
+    ct state invalid drop
+
+    # allow from loopback
+    iifname lo accept
+
+    # allow icmp
+    # ip protocol icmp accept
+    # meta l4proto ipv6-icmp accept
+
+    # allow ssh
+    tcp dport ssh accept
+
+    # allow dlna
+    tcp dport 8200 accept
+    #udp dport 1900 accept
+    
+    # method pass https://www.grc.com/
+    # icmp type echo-request accept
+    # icmp type time-exceeded accept    
+    
+    # everything else
+    reject with icmpx type port-unreachable
+  }
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    drop
+  }
+  chain output {
+    type filter hook output priority 0; policy accept;
+   
+    # block specific site
+    meta l4proto tcp ip daddr 185.88.181.0/24 drop
+
+  }
+
+}
+
+# vim:set ts=2 sw=2 et:
+
+include "/etc/nftables/fail2ban.conf"
+
+#######################################################################################
+# Default 2
+
 #!/usr/bin/nft -f
 # ipv4/ipv6 Simple & Safe Firewall
 # you can find examples in /usr/share/nftables/
@@ -49,7 +120,7 @@ table inet filter {
 include "/etc/nftables/fail2ban.conf"
 
 #######################################################################################
-# Default 2
+# Default 3
 
 #!/usr/bin/nft -f
 # ipv4/ipv6 Simple & Safe Firewall
