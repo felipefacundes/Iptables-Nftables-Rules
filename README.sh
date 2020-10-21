@@ -208,6 +208,7 @@
 #
 # iptables -A OUTPUT -p tcp -m tcp -d www.xvideos.com -j DROP
 # meta l4proto tcp ip daddr 185.88.181.0/24 drop
+# meta l4proto tcp ip6 daddr 2800:3f0:4004:800::2003 drop
 #
 #              Moving from iptables to nftables
 #              --------------------------------
