@@ -29,12 +29,16 @@ table inet filter {
     # early drop of invalid connections
     ct state invalid drop
 
-    # allow from loopback
-    iifname lo accept
+    # drop from loopback
+    # iifname lo drop
 
-    # allow icmp
-    # ip protocol icmp accept
-    # meta l4proto ipv6-icmp accept
+    # drop icmp
+    ip protocol icmp drop
+    meta l4proto ipv6-icmp drop
+
+    # drop http-proxy
+    tcp dport 8080 drop
+    udp dport 8080 drop
 
     # allow ssh
     tcp dport ssh accept
@@ -57,9 +61,11 @@ table inet filter {
   chain output {
     type filter hook output priority 0; policy accept;
    
-    # block specific site
+    # block specific site 
     meta l4proto tcp ip daddr 185.88.181.0/24 drop
-
+    
+    # block ipv6 ip
+    #meta l4proto tcp ip6 daddr 2800:3f0:4004:800::/128 drop
   }
 
 }
