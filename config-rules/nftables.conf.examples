@@ -1,7 +1,70 @@
 # #   ##-##   sudo pacman -S nftables iptables-nft fail2ban
 
-#############################################################################################################
-# #### #### #### Default Rule 1
+#######################################################################################
+# Default 1
+
+#!/usr/bin/nft -f
+# ipv4/ipv6 Simple & Safe Firewall
+# you can find examples in /usr/share/nftables/
+# https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+
+    # allow established/related connections
+    ct state {established, related} accept
+    
+    # early drop of invalid connections
+    ct state invalid drop
+
+    # drop from loopback
+    # iifname lo drop
+
+    # drop icmp
+    # ip protocol icmp drop
+    # meta l4proto ipv6-icmp drop
+
+    # drop http-proxy
+    # tcp dport 8080 drop
+    # udp dport 8080 drop
+
+    # allow ssh
+    tcp dport 22 accept
+
+    # allow dlna
+    tcp dport 8200 accept
+    # udp dport 1900 accept
+    
+    # method pass https://www.grc.com/
+    # icmp type echo-request accept
+    # icmp type time-exceeded accept    
+    
+    # everything else
+    reject with icmpx type port-unreachable
+  }
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    drop
+  }
+  chain output {
+    type filter hook output priority 0; policy accept;
+   
+    # block specific site 
+    meta l4proto tcp ip daddr 185.88.181.0/24 drop
+    
+    # block ipv6 ip
+    #meta l4proto tcp ip6 daddr 2800:3f0:4004:800::/128 drop
+  }
+
+}
+
+# vim:set ts=2 sw=2 et:
+
+include "/etc/nftables/fail2ban.conf"
+
+#######################################################################################
+# Default 2
 
 #!/usr/bin/nft -f
 # ipv4/ipv6 Simple & Safe Firewall
@@ -33,8 +96,8 @@ table inet filter {
     # iifname lo drop
 
     # drop icmp
-    ip protocol icmp drop
-    meta l4proto ipv6-icmp drop
+    # ip protocol icmp drop
+    # meta l4proto ipv6-icmp drop
 
     # drop http-proxy
     tcp dport 8080 drop
@@ -45,7 +108,7 @@ table inet filter {
 
     # allow dlna
     tcp dport 8200 accept
-    #udp dport 1900 accept
+    # udp dport 1900 accept
     
     # method pass https://www.grc.com/
     # icmp type echo-request accept
@@ -73,59 +136,6 @@ table inet filter {
 # vim:set ts=2 sw=2 et:
 
 include "/etc/nftables/fail2ban.conf"
-
-#############################################################################################################
-# #### #### #### Default Rule 2
-
-#!/usr/bin/nft -f
-# ipv4/ipv6 Simple & Safe Firewall
-# you can find examples in /usr/share/nftables/
-# https://workaround.org/ispmail/buster/firewalling-and-brute-force-mitigation/
-
-table inet filter {
-  chain input {
-    type filter hook input priority 0; policy drop;
-
-    # allow established/related connections
-    ct state {established, related} accept
-    
-    # early drop of invalid connections
-    ct state invalid drop
-
-    # allow from loopback
-    iifname lo accept
-
-    # drop icmp
-    # ip protocol icmp drop
-    # meta l4proto ipv6-icmp drop
-
-    # allow ssh
-    tcp dport ssh accept
-
-    # allow dlna
-    tcp dport 8200 accept
-    #udp dport 1900 accept
-    
-    # everything else
-    reject with icmpx type port-unreachable
-  }
-  chain forward {
-    type filter hook forward priority 0; policy drop;
-    drop
-  }
-  chain output {
-    type filter hook output priority 0; policy accept;
-   
-    # block specific site
-    meta l4proto tcp ip daddr 185.88.181.0/24 drop
-
-  }
-
-}
-
-# vim:set ts=2 sw=2 et:
-
-# include "/etc/nftables/fail2ban.conf"
 
 #############################################################################################################
 # #### #### #### Default Rule 3
