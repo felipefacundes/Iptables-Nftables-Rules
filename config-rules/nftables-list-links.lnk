@@ -16,6 +16,7 @@ https://manpages.debian.org/buster-backports/nftables/nftables.8.en.html
 https://www.spinics.net/lists/netfilter/msg58936.html
 https://kernelnewbies.org/nftables_examples
 
+https://cryptsus.com/blog/setting-up-nftables-firewall.html  # TOP Rule
 
 
 iptables-save > iptables-ruleset.txt
